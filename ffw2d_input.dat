@@ -1,0 +1,87 @@
+# ************************************************************************
+# ************************************************************************
+#  2D FDTD Full-Wave Simulation (FFW2D) Input Parameter Configuration Form
+#  by zhen zhou 2290227486@qq.com
+# ************************************************************************
+# ************************************************************************
+
+
+#------------------------ 0. Polarisation Mode Selection -----------------
+mode = X # O or X
+#-------------------------------------------------------------------------
+
+
+
+#------------------------ 1. Equilibrium & Profile Data Paths ------------
+gfile_path = g107137.010200 # Path to EFIT G-File
+density_prof_path = ne_107137_10s.txt # Path to 1D rhop electron density profile, unit: 10^19 m^-3
+R0 = -1 # Read from gfile if set to -1 (unit: m). Bt can be specified by setting R0 and Bt0
+Bt0 = -1 # Bt at R0. Read from gfile if set to -1 (unit: T)
+a = -1  # Minor radius. Read from gfile if set to -1 (unit: m)
+#-------------------------------------------------------------------------
+
+
+
+#------------------------ 2. Numerical Grid & Time Iteration ------------
+nsteps = 9000 # Total number of FDTD iteration steps
+R_min = 2.1 # Minimum R bound of the spatial simulation grid (m)
+R_max = 2.5 # Maximum R bound of the spatial simulation grid (m)
+Z_min = -0.3 # Minimum Z bound of the spatial simulation grid (m)
+Z_max = 0.3 # Maximum Z bound of the spatial simulation grid (m)
+xy_div = 15 # Grid resolution, dx = wavelength / xy_div
+dtfactor = -1 # Auto setting if set to -1, dt = dx / (2 * c) / dtfactor;
+# Higher time resolution with larger value (1, 2, 3...)
+#-------------------------------------------------------------------------
+
+
+#------------------------ 3. Microwave Source Parameters -----------------
+freq_hz = 60e9  # Launched microwave frequency (Hz, e.g., 60 GHz)
+#-------------------------------------------------------------------------
+
+
+
+#------------------------ 4. Collision & Dissipation Control -------------
+vc_mode = 0 # Collision frequency mode: 0 = constant, 1 = calculated from temperature profile
+vc_constant = 5.0e8 # Constant collision frequency when vc_mode = 0 (s^-1)
+temperature_prof_path = te_prof.dat # Path to 1D electron temperature profile (optional)
+# if vc_mode = 1
+#-------------------------------------------------------------------------
+
+
+
+
+#------------------------ 5. Local Analytical Turbulence Parameters -------
+turb_num = 0 # Number of turbulent perturbation components
+turb_fre = [60e7] # Mode frequency
+turb_m_mode = [6] # Poloidal mode number, m = k_theta * radius
+turb_rho_c = [0.9] # Central position of turbulence (normalized flux radius rho)
+turb_delta_r = [0.1] # Radial envelope width of turbulence (normalized flux radius delta_rho)
+turb_delta_ne = [0.05] # Turbulent perturbation amplitude delta_ne / ne_0 (e.g., 0.05 = 5%)
+
+turb_rand = 0 # Turn on background turbulence if set to 1
+turb_rand_delta_ne = 0.005 # Amplitude of random background turbulence perturbation
+#-------------------------------------------------------------------------
+
+
+
+#------------------------ 6. Launching Antenna Parameters ----------------
+antenna_launch_R = 2.4 # Central R position of the launching antenna (m)
+antenna_launch_Z = 0 # Central Z position of the launching antenna (m)
+antenna_launch_angle = 0 # Launch angle (degrees, 0 is horizontally left, positive is upwards, negative is downwards)
+#-------------------------------------------------------------------------
+
+
+#------------------------ 7. Receiving Antenna Parameters ----------------
+rx_num = 1 # Number of receiving antennas
+antenna_rx_R = [2.4,2.4] # Central R position of receiving antennas (m, multiple antennas separated by commas)
+antenna_rx_Z = [-0.05,0.05] # Z position of the receiving antennas (m)
+antenna_rx_angle = [0,0] # Angles of the multiple receiving antenna array
+#-------------------------------------------------------------------------
+
+
+
+
+#------------------------ 8. Auxiliary Parameters -------------------------
+output_interval = 1000 # Number of steps between each 2D wavefield snapshot output
+pml_cells = 24 # Number of grid cell layers for Perfectly Matched Layer (PML) boundary
+#-------------------------------------------------------------------------
