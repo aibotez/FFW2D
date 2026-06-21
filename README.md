@@ -45,6 +45,12 @@ After a successful compilation, you will find the generated executable binary fi
 
 Prepare your input files (such as the density profile and the `gfile`), then run the program using one of the following commands:
 ```
+if CPU execution:
+	export KOKKOS_NUM_THREADS=$FFW_THREADS
+	# FFW_THREADS is the parallel thread number eg. 16,32,64 ...
+	export OMP_PROC_BIND=spread  
+	export OMP_PLACES=threads
+
 ./ffw2d 
 Or specify the path to your configuration file: 
 ./ffw2d /xx/ffw2d_input.dat
