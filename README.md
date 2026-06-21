@@ -42,9 +42,26 @@ cmake  --build .
 ```
 After a successful compilation, you will find the generated executable binary file inside the `build` directory.
 ##### 5.Running:
+
 Prepare your input files (such as the density profile and the `gfile`), then run the program using one of the following commands:
 ```
 ./ffw2d 
 Or specify the path to your configuration file: 
 ./ffw2d /xx/ffw2d_input.dat
 ```
+##### 6.Plotting
+
+You can copy the `plt.py` script into your simulation results directory, and run the following command to visualize the results: 
+```
+python plt.py
+```
+##### 7.Output Files Description
+
+- **`IQ_Isig.dat` & `IQ_Qsig.dat`**: Unfiltered IQ signal components obtained from mixing the received signal with the transmitter source (acting as the LO). _Note: Low-pass filtering is required during post-processing._
+- **`ne_2d_0.dat`**: Static 2D density profile.
+- **`ne_2d.dat`**: 2D density profile with fluctuations added.
+- **`receive_E.dat`**: Time evolution of the electric field at the receiving antenna.
+- **`Edis.dat`**: 2D spatial distribution of the electric field.
+- **`time.dat`**: Simulation time steps (in seconds, `s`).
+- **`R.dat` & `Z.dat`**: 2D spatial coordinates (in meters, `m`).
+- **`antenna_geo.dat`**: Antenna geometry data, which can be overlaid on other plots using contour lines.
