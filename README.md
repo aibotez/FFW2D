@@ -1,4 +1,4 @@
-# **FFW2D: A 2D Full-Wave Simulation Code Based on Finite Difference Method
+# FFW2D: A 2D Full-Wave Simulation Code Based on Finite Difference Method
 
 基于有限差分的二维全波模拟程序
 ## 🚀 Features 
@@ -7,7 +7,7 @@
 - Supports adding density fluctuations.
 - Supports custom antenna configurations.
 
-![[Figure_1.png]]
+![](img/Figure_1.png)
 
 ## 🛠 Build and Compilation 
 ### Prerequisites
