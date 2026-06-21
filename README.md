@@ -1,11 +1,11 @@
-# FFW2D: A 2D Full-Wave Simulation Code Based on Finite Difference Method
+# FFW2D: 2D Finite-Difference Time-Domain Full-Wave Simulation
 
 
 ## 🚀 Features 
-- **Supports both O-mode and X-mode propagation. 
-- **Supports both CPU and GPU acceleration.
-- **Supports adding density fluctuations.
-- **Supports custom antenna configurations.
+- Supports both O-mode and X-mode propagation. 
+- Supports both CPU and GPU acceleration.
+- Supports adding density fluctuations.
+- Supports custom antenna configurations.
 
 ![](img/Figure_1.png)
 
