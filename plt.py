@@ -13,6 +13,10 @@ def get_fft(time,nant,A_complex,freq_span):
     N = len(time)
     N_fft = 819200
     freqs = np.fft.fftshift(np.fft.fftfreq(N_fft, d=dt))
+    freq = freqs / 1e6
+    idx = np.where((np.abs(freq) < freq_span[1]) & (freq > freq_span[0]))[0]
+    freq = freqs[idx]
+    psd = np.zeros((nant,len(freq)))
     for ch in range(nant):
         # Extract the full complex signal: A(t) = I(t) + i*Q(t)
         signal_complex = A_complex[ch, :]
@@ -26,13 +30,10 @@ def get_fft(time,nant,A_complex,freq_span):
         fft_vals = np.fft.fftshift(np.fft.fft(signal_complex, n=N_fft))
         # Calculate Power Spectral Density (PSD) in dB
         # psd = 20 * np.log10(np.abs(fft_vals) / N_fft + 1e-12)
-        psd = 20 * np.log10(np.abs(fft_vals) / len(time) + 1e-12)
+        psd0 = 20 * np.log10(np.abs(fft_vals) / len(time) + 1e-12)
         # psd = np.log10(np.abs(fft_vals))
-        freq = freqs / 1e6
-        idx = np.where((np.abs(freq) < freq_span[1]) & (freq > freq_span[0]))[0]
-        freq = freq[idx]
-        psd = psd[idx]
-        return freq,psd
+        psd[ch,:] = psd0[idx]
+    return freq,psd
 
 
 
@@ -85,21 +86,16 @@ def dealIQ(t, I_raw_matrix, Q_raw_matrix):
     dt = t[1] - t[0]         # Automatic calculation of time step (s)
     fs = 1 / dt              # Sampling frequency (Hz)
     cutoff_freq = 3.0e9      # Cutoff frequency set to 3 GHz
-    
     # Normalized cutoff frequency (Wn is relative to Nyquist frequency fs/2)
     Wn = cutoff_freq / (fs / 2)
-    
     # Design a 4th-order lowpass Butterworth filter
     b, a = butter(4, Wn, btype='low')
-    
     I_filtered = np.zeros_like(I_raw_matrix)
     Q_filtered = np.zeros_like(Q_raw_matrix)
-    
     # Apply zero-phase forward-backward filtering across all channels
     for ch in range(I_raw_matrix.shape[0]):
         I_filtered[ch, :] = filtfilt(b, a, I_raw_matrix[ch, :])
         Q_filtered[ch, :] = filtfilt(b, a, Q_raw_matrix[ch, :])
-        
     return I_filtered, Q_filtered
 
 # Execute filtering and balance calibration
@@ -137,7 +133,7 @@ custom_ramp = LinearSegmentedColormap.from_list('cool_microwave', colors)
 
 E_intensity = np.abs(Edis.T)
 im_E = plt.imshow(E_intensity, extent=extent, origin='lower', aspect='auto',
-                 cmap=custom_ramp,vmax=3) # 过滤掉前10%的背景噪点
+                 cmap=custom_ramp,vmax=3)
 
 plt.contour(Metal.T, extent=extent, origin='lower',colors='green',linewidths=0.5, zorder=10)
 
@@ -150,6 +146,9 @@ plt.subplot(1, 3, 2)
 plt.contour(rho2d.T, extent=extent, origin='lower',colors='black',linewidths=0.5, zorder=10)
 im2 = plt.imshow(dne.T, extent=[R.min(), R.max(), Z.min(), Z.max()], origin='lower', aspect='auto', cmap='bwr', vmin=np.min(dne), vmax=np.max(dne))
 #im2 = plt.imshow(dne.T, extent=[R.min(), R.max(), Z.min(), Z.max()], origin='lower', aspect='auto', cmap='bwr')
+im_E = plt.imshow(E_intensity, extent=extent, origin='lower', aspect='auto',
+                 cmap=custom_ramp,vmax=5)
+plt.contour(Metal.T, extent=extent, origin='lower',colors='green',linewidths=0.5, zorder=10)
 plt.title('Density Fluctuation (dne/ne0)')
 plt.xlabel('R (m)')
 plt.ylabel('Z (m)')
@@ -198,7 +197,7 @@ axes = axes0.flatten()
 #fig, axes = plt.subplots(nplt, 1, figsize=(8, 16), sharex=False)
 # 1. Received raw Ey field
 
-axes[0].plot(time * 1e9, Ey_rece.T, 'k-')
+axes[0].plot(time * 1e9, Ey_rece.T)
 axes[0].set_title('Raw E Received Signal')
 axes[0].set_ylabel('Amplitude')
 axes[0].grid(True)
@@ -207,15 +206,17 @@ axes[0].grid(True)
 sig = A_complex
 freq_span = [0.01,1000]
 [freq,psd] = get_fft(time,nant,A_complex,freq_span)
-axes[1].plot(freq, psd, linewidth=1.5)
+axes[1].plot(freq, psd.T, linewidth=1.5)
 axes[1].set_title('IQ complex signal fft')
 axes[1].grid(True)
 axes[1].set_xlabel('Frequency (MHz)')
 axes[1].set_ylabel('Power (dB)')
 sig = np.abs(A_complex)
-
-[freq,psd] = get_fft(time,nant,A_complex,freq_span)
-axes[2].plot(freq, psd, linewidth=1.5)
+A_IQ = np.zeros((nant,len(time)))
+for i in range(nant):
+    A_IQ[i,:] = np.abs(A_complex[i, :])
+[freq,psd] = get_fft(time,nant,A_IQ,freq_span)
+axes[2].plot(freq, psd.T, linewidth=1.5)
 axes[2].set_title('IQ amplitude fft')
 axes[2].grid(True)
 axes[2].set_xlabel('Frequency (MHz)')
@@ -244,8 +245,7 @@ axes[nplt-2].grid(True)
 # 4. Normalized I-Q vector constellation plot
 ax_iq = axes[nplt-1]
 for i in range(nant):
-    A_IQ = np.abs(A_complex[i,:])
-    ax_iq.plot(time * 1e9, A_IQ, markersize=2, label=f'Ch {i + 1}')
+    ax_iq.plot(time * 1e9, A_IQ[i,:], markersize=2, label=f'Ch {i + 1}')
     ax_iq.set_title('IQ Amplitude')
     ax_iq.grid(True)
 
