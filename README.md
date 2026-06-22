@@ -7,7 +7,7 @@
 - Supports adding density fluctuations.
 - Supports custom antenna configurations.
 
-![](img/Figure_1.png)
+![697](img/Figure_1_rand_tur.png)
 
 ## 🛠 Build and Compilation 
 ### Prerequisites
