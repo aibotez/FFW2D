@@ -69,6 +69,7 @@ python plt.py
 - **`ne_2d.dat`**: 2D density profile with fluctuations added.
 - **`receive_E.dat`**: Time evolution of the electric field at the receiving antenna.
 - **`Edis.dat`**: 2D spatial distribution of the electric field.
-- **`time.dat`**: Simulation time steps (in seconds, `s`).
+- **`time.dat`**: Simulation time steps (`us`).
 - **`R.dat` & `Z.dat`**: 2D spatial coordinates (in meters, `m`).
 - **`antenna_geo.dat`**: Antenna geometry data, which can be overlaid on other plots using contour lines.
+- **`ffw2d_evolution.h5`**: The time evolution parameters of *`Edis`* and *`ne_2d`* are controlled by the **`output_interval`** parameter in the input file.
