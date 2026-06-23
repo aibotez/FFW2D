@@ -58,7 +58,7 @@ dne_0 = np.divide(frame_0_dn - nedata0_T, nedata0_T,
 # 3. Canvas & Layout Initialization (12:5 Rectangle)
 # ==========================================
 fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 5), layout='constrained')
-fig.suptitle("Tokamak Simulation Dynamic Evolution", fontsize=16)
+fig.suptitle("FFW2D Evolution", fontsize=16)
 
 # --- Left Plot: Electric Field & Density Background ---
 im_ne = ax1.imshow(frame_0_dn, extent=extent, origin='lower', aspect='auto')

@@ -16,6 +16,7 @@ Before compiling the program, please ensure that the following dependencies are 
 - CMake (>= 3.16) 
 - GCC (with C++20 support) 
 - kokkos (>=5.1)
+- hdf5
 ### Compilation Steps 
 
 ##### 1. Clone the repository to your local machine: 

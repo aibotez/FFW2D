@@ -64,7 +64,7 @@ if IQ_I_raw.ndim == 1:
 nant, timel = IQ_I_raw.shape
 
 # Filter data to include only time > 0
-idx = np.where(time * 1e9 > 5)[0]
+idx = np.where(time  > 0)[0]
 
 if (nant<2 and nant>0):
     Ey_rece0 = np.zeros((nant,len(time)))
@@ -84,7 +84,7 @@ dne = np.divide(ne_2d - ne_base_2d, ne_base_2d, out=np.zeros_like(ne_2d), where=
 # ==========================================
 def dealIQ(t, I_raw_matrix, Q_raw_matrix):
     dt = t[1] - t[0]         # Automatic calculation of time step (s)
-    fs = 1 / dt              # Sampling frequency (Hz)
+    fs = 1 / dt             # Sampling frequency (Hz)
     cutoff_freq = 3.0e9      # Cutoff frequency set to 3 GHz
     # Normalized cutoff frequency (Wn is relative to Nyquist frequency fs/2)
     Wn = cutoff_freq / (fs / 2)
@@ -98,8 +98,10 @@ def dealIQ(t, I_raw_matrix, Q_raw_matrix):
         Q_filtered[ch, :] = filtfilt(b, a, Q_raw_matrix[ch, :])
     return I_filtered, Q_filtered
 
+
+
 # Execute filtering and balance calibration
-IQ_I, IQ_Q = dealIQ(time, IQ_I_raw, IQ_Q_raw)
+IQ_I, IQ_Q = dealIQ(time/1e9, IQ_I_raw, IQ_Q_raw)
 
 # ==========================================
 # 3. Signal Demodulation: Amplitude and Phase
@@ -113,13 +115,19 @@ V_normalized = A_complex / np.abs(A_complex)
 I_norm = np.real(V_normalized)
 Q_norm = np.imag(V_normalized)
 
+extent=[R.min(), R.max(), Z.min(), Z.max()]
+
+#E_intensity = np.abs(Edis.T)
+#plt.figure()
+#plt.contour(E_intensity,extent=extent)
+
 # ==========================================
 # Plot 1: 2D Electron Density and Fluctuations
 # ==========================================
 plt.figure(figsize=(12, 5))
 
 
-extent=[R.min(), R.max(), Z.min(), Z.max()]
+
 plt.subplot(1, 3, 1)
 im_ne = plt.imshow(ne_2d.T, extent=extent, origin='lower', aspect='auto', cmap='jet')
 
@@ -197,7 +205,7 @@ axes = axes0.flatten()
 #fig, axes = plt.subplots(nplt, 1, figsize=(8, 16), sharex=False)
 # 1. Received raw Ey field
 
-axes[0].plot(time * 1e9, Ey_rece.T)
+axes[0].plot(time, Ey_rece.T)
 axes[0].set_title('Raw E Received Signal')
 axes[0].set_ylabel('Amplitude')
 axes[0].grid(True)
@@ -205,7 +213,7 @@ axes[0].grid(True)
 
 sig = A_complex
 freq_span = [0.01,1000]
-[freq,psd] = get_fft(time,nant,A_complex,freq_span)
+[freq,psd] = get_fft(time/1e9,nant,A_complex,freq_span)
 axes[1].plot(freq, psd.T, linewidth=1.5)
 axes[1].set_title('IQ complex signal fft')
 axes[1].grid(True)
@@ -215,7 +223,7 @@ sig = np.abs(A_complex)
 A_IQ = np.zeros((nant,len(time)))
 for i in range(nant):
     A_IQ[i,:] = np.abs(A_complex[i, :])
-[freq,psd] = get_fft(time,nant,A_IQ,freq_span)
+[freq,psd] = get_fft(time/1e9,nant,A_IQ,freq_span)
 axes[2].plot(freq, psd.T, linewidth=1.5)
 axes[2].set_title('IQ amplitude fft')
 axes[2].grid(True)
@@ -232,7 +240,7 @@ axes[2].set_ylabel('Power (dB)')
     #axes[i].grid(True)
 
 # 3. Continuous phase evolution profile
-axes[nplt-2].plot(time * 1e9, Phase_matrix.T, linewidth=1.5)
+axes[nplt-2].plot(time, Phase_matrix.T, linewidth=1.5)
 axes[nplt-2].set_title('IQ Phase')
 axes[nplt-2].set_ylabel('Phase (rad)')
 axes[nplt-2].grid(True)
@@ -245,7 +253,7 @@ axes[nplt-2].grid(True)
 # 4. Normalized I-Q vector constellation plot
 ax_iq = axes[nplt-1]
 for i in range(nant):
-    ax_iq.plot(time * 1e9, A_IQ[i,:], markersize=2, label=f'Ch {i + 1}')
+    ax_iq.plot(time, A_IQ[i,:], markersize=2, label=f'Ch {i + 1}')
     ax_iq.set_title('IQ Amplitude')
     ax_iq.grid(True)
 
