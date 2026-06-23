@@ -58,9 +58,13 @@ Or specify the path to your configuration file:
 ```
 ##### 6.Plotting
 
-You can copy the `plt.py` script into your simulation results directory, and run the following command to visualize the results: 
+You can copy the `plt.py` or `pltani.py` script into your simulation results directory, and run the following command to visualize the results: 
 ```
 python plt.py
+
+python pltani.py
+
+Show time evolution of Edis and ne_2d which are controlled by the 'output_interval' parameter in the input file.
 ```
 ##### 7.Output Files Description
 

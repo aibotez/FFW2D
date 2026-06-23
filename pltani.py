@@ -1,88 +1,147 @@
 import h5py
+import os
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
+from matplotlib.colors import LinearSegmentedColormap
+from tqdm import tqdm  # Progress bar library
 
 # ==========================================
-# 1. 读取 HDF5 数据
+# 1. Load Original Static Data
 # ==========================================
-file_path = "ffw2d_result.h5"  # 你的 H5 文件名
-with h5py.File(file_path, 'r') as f:
-    # 打印文件内的结构，确保名字对齐
-    print("文件内的数据集:", list(f.keys()))
-
-    # 读取静态网格（如果有的话，用于坐标轴）
-    # R = f['R_Coordinate'][:]
-
-    # 载入时变三维数据立方体 [Total_Steps, NX, NY]
-    # 💡 这里直接切片加载到内存中
-    Ez_data = f['Edis'][:]  # 你的电场动态分布
-
-    # 如果你的密度扰动也是时变的，假设叫 'dn_Evolution'：
-    dn_data = f['ne_2d'][:]
-ne_data = np.loadtxt('ne_2d_0.dat')
+Metal = np.loadtxt('antenna_geo.dat')
+ne_data0 = np.loadtxt('ne_2d_0.dat')
 R = np.loadtxt('R.dat')
 Z = np.loadtxt('Z.dat')
-extent=[R.min(), R.max(), Z.min(), Z.max()]
+time = np.loadtxt('time.dat')
+rho2d = np.loadtxt('rho_2d.dat')
+
+file_path = "ffw2d_evolution.h5"
+script_dir = os.path.dirname(os.path.abspath(__file__))
+file_path = os.path.join(script_dir, file_path)
+if not os.path.exists(file_path):
+    raise FileNotFoundError(f"H5 file not found at:\n{file_path}")
+
+f = h5py.File(file_path, 'r')
+print("Datasets in file:", list(f.keys()))
+
+Ez_data = f['Edis']
+dn_data = f['ne_2d']
+
 total_frames, nx, ny = Ez_data.shape
-print(f"成功载入数据！总帧数: {total_frames}, 网格大小: {nx} x {ny}")
+print(f"H5 pointers mapped successfully! Total frames: {total_frames}, Grid size: {nx} x {ny}")
 
 # ==========================================
-# 2. 初始化画布与子图布局
+# 2. Downsampling Configuration (Spatial Stride)
 # ==========================================
-fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 6))
+stride = 4
+
+R_sub = R[::stride]
+Z_sub = Z[::stride]
+ne_data0_sub = ne_data0[::stride, ::stride]
+Metal_sub = Metal[::stride, ::stride]
+rho2d_sub = rho2d[::stride, ::stride]
+
+extent = [R_sub.min(), R_sub.max(), Z_sub.min(), Z_sub.max()]
+
+frame_0_ez = Ez_data[0, ::stride, ::stride].T
+frame_0_dn = dn_data[0, ::stride, ::stride].T
+nedata0_T = ne_data0_sub.T
+Metal_T = Metal_sub.T
+rho2d_T = rho2d_sub.T
+
+dne_0 = np.divide(frame_0_dn - nedata0_T, nedata0_T,
+                  out=np.zeros_like(frame_0_dn), where=(nedata0_T > 0.0))
+
+# ==========================================
+# 3. Canvas & Layout Initialization (12:5 Rectangle)
+# ==========================================
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 5), layout='constrained')
 fig.suptitle("Tokamak Simulation Dynamic Evolution", fontsize=16)
 
-# ─── 左图：电场 Ez 动态分布 ───
-# 物理仿真中电场常有正负，用 'seismic' 或 'RdBu' 渐变色最为直观
-vmax_ez = np.max(np.abs(Ez_data)) * 0.8  # 稍微缩放色彩范围让波纹更明显
-im1 = ax1.imshow(Ez_data[0].T,extent=extent, cmap='jet', 
-                 vmin=-5, vmax=5, origin='lower')
-ax1.set_title("Electric Field $E_z$")
-ax1.set_xlabel("Y (Grid)")
-ax1.set_ylabel("X (Grid)")
-fig.colorbar(im1, ax=ax1, label="Field Intensity")
+# --- Left Plot: Electric Field & Density Background ---
+im_ne = ax1.imshow(frame_0_dn, extent=extent, origin='lower', aspect='auto')
 
-# ─── 右图：密度扰动 ───
-vmax_dn = np.max(np.abs(dn_data)) * 0.8
-im2 = ax2.imshow(dn_data[0].T,extent=extent, cmap='viridis',
-                 vmin=-vmax_dn, vmax=vmax_dn, origin='lower')
+colors = [
+    (0.3, 0.0, 0.0, 0.0),
+    (0.5, 0.0, 0.0, 0.4),
+    (1.0, 0.2, 0.2, 0.7),
+    (1.0, 1.0, 1.0, 1.0)
+]
+custom_ramp = LinearSegmentedColormap.from_list('cool_microwave', colors)
+E_intensity_0 = np.abs(frame_0_ez)
+
+im_E1 = ax1.imshow(E_intensity_0, extent=extent, origin='lower', aspect='auto', cmap=custom_ramp, vmax=3)
+
+ax1.contour(Metal_T, extent=extent, origin='lower', colors='green', linewidths=0.6, zorder=10)
+ax1.contour(rho2d_T, extent=extent, levels=[1.0], origin='lower', colors='black', linewidths=0.6, zorder=10)
+ax1.set_title("Electric Field $E_z$ & Density Grid")
+ax1.set_xlabel("R (m)")
+ax1.set_ylabel("Z (m)")
+fig.colorbar(im_E1, ax=ax1, label="Field Intensity")
+
+#cmap='bwr','jet'
+# --- Right Plot: Relative Density Perturbation (dne) ---
+imdne = ax2.imshow(dne_0, extent=extent, origin='lower', aspect='auto', vmin=np.min(dne_0), vmax=np.max(dne_0))
+im_E2 = ax2.imshow(E_intensity_0, extent=extent, origin='lower', aspect='auto', cmap=custom_ramp, vmax=3)
+
+ax2.contour(Metal_T, extent=extent, origin='lower', colors='green', linewidths=0.6, zorder=10)
+ax2.contour(rho2d_T, extent=extent, levels=[1.0], origin='lower', colors='black', linewidths=0.6, zorder=10)
 ax2.set_title(r"Density Perturbation $\delta n_e$")
-ax2.set_xlabel("Y (Grid)")
-fig.colorbar(im2, ax=ax2, label="Perturbation Amplitude")
+ax2.set_xlabel("R (m)")
+fig.colorbar(imdne, ax=ax2, label="Density Perturbation Scale")
 
-# 时间文本标签
 time_text = ax1.text(0.02, 0.95, '', transform=ax1.transAxes, color='black',
-                     bbox=dict(facecolor='white', alpha=0.8))
+                     bbox=dict(facecolor='white', alpha=0.8), zorder=20)
 
 
 # ==========================================
-# 3. 🌟 核心：动画刷新函数（高效更新数据，不重建图像）
+# 4. Animation Frame Update Function
 # ==========================================
+
+dttimecurent = time[1]-time[0]
+nstep_per_frame = len(time)/tot_time
 def update(frame):
-    # 使用 set_data 机制可以避免重复创建 ax.imshow，极大地提升渲染流畅度
-    im1.set_data(Ez_data[frame].T)
-    im2.set_data(dn_data[frame].T)
+    current_ez = np.abs(Ez_data[frame, ::stride, ::stride].T)
+    current_ne = dn_data[frame, ::stride, ::stride].T
 
-    # 更新帧数文本
-    time_text.set_text(f"Frame: {frame}/{total_frames - 1}")
+    dne = np.divide(current_ne - nedata0_T, nedata0_T, out=np.zeros_like(current_ne), where=(nedata0_T > 0.0))
 
-    # 返回需要被重新绘制的图表对象
-    return im1, im2, time_text
+    im_E1.set_data(current_ez)
+    im_E2.set_data(current_ez)
+    im_ne.set_data(current_ne)
+    imdne.set_data(dne)
+
+
+    current_time = (frame/total_frames) * dttimecurent
+    tot_time = total_frames * dttimecurent
+    time_text.set_text(f"time: {current_time}/{tot_time} (us)" )
+    return im_ne, im_E1, imdne, im_E2, time_text
 
 
 # ==========================================
-# 4. 启动与保存动画
+# 5. Execution & Export with Progress Bar
 # ==========================================
-# interval=100 表示每帧间隔 100 毫秒
-ani = animation.FuncAnimation(fig, update, frames=total_frames,
-                              interval=100, blit=True)
+ani = animation.FuncAnimation(fig, update, frames=total_frames, interval=40, blit=False)
 
-# 或者是直接弹窗看动态交互式动画
-plt.tight_layout()
+# 🌟 1. Initialize the progress bar on terminal
+pbar = tqdm(total=total_frames, desc="Rendering Video")
+
+
+# 🌟 2. Define the callback function that executes every frame
+def progress_callback(current_frame, total):
+    pbar.update(1)
+
+
+print("Exporting animation to GIF...")
+# 🌟 3. Pass the callback function to ani.save()
+ani.save('ffw2d_evolution.gif', writer='pillow', fps=25, dpi=100, progress_callback=progress_callback)
+
+# 🌟 4. Close the progress bar when finished
+pbar.close()
+f.close()
+print("Animation saved successfully as ffw2d_evolution.gif")
+
 plt.show()
 
-# 💡 如果想保存为高质量视频（需要系统安装了 ffmpeg）：
-# print("正在导出视频为 simulation_evolution.mp4...")
-# ani.save('simulation_evolution.mp4', writer='ffmpeg', fps=10, dpi=150)
-# print("导出成功！")
+plt.close(fig)
