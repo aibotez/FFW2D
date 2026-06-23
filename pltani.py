@@ -15,6 +15,7 @@ R = np.loadtxt('R.dat')
 Z = np.loadtxt('Z.dat')
 time = np.loadtxt('time.dat')
 rho2d = np.loadtxt('rho_2d.dat')
+output_interval = np.loadtxt('evo.dat')[0]
 
 file_path = "ffw2d_evolution.h5"
 script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -99,11 +100,16 @@ time_text = ax1.text(0.02, 0.95, '', transform=ax1.transAxes, color='black',
 # 4. Animation Frame Update Function
 # ==========================================
 
-dttimecurent = time[1]-time[0]
-nstep_per_frame = len(time)/tot_time
+
+dttimecurent = time[1] - time[0]
+dt_per_frame = output_interval * dttimecurent
+tot_time = total_frames * dt_per_frame
 def update(frame):
-    current_ez = np.abs(Ez_data[frame, ::stride, ::stride].T)
-    current_ne = dn_data[frame, ::stride, ::stride].T
+    raw_ez_frame = Ez_data[frame, :, :]
+    raw_dn_frame = dn_data[frame, :, :]
+
+    current_ez = np.abs(raw_ez_frame[::stride, ::stride].T)
+    current_ne = raw_dn_frame[::stride, ::stride].T
 
     dne = np.divide(current_ne - nedata0_T, nedata0_T, out=np.zeros_like(current_ne), where=(nedata0_T > 0.0))
 
@@ -112,36 +118,29 @@ def update(frame):
     im_ne.set_data(current_ne)
     imdne.set_data(dne)
 
+    # Calculate real physical time elapsed for current frame
+    current_time_val = frame * dt_per_frame
+    time_text.set_text(f"Time: {current_time_val:.2f}/{tot_time:.4f} (us)")
 
-    current_time = (frame/total_frames) * dttimecurent
-    tot_time = total_frames * dttimecurent
-    time_text.set_text(f"time: {current_time}/{tot_time} (us)" )
+    #print(dttimecurent,current_time_val,tot_time)
+
     return im_ne, im_E1, imdne, im_E2, time_text
-
 
 # ==========================================
 # 5. Execution & Export with Progress Bar
 # ==========================================
 ani = animation.FuncAnimation(fig, update, frames=total_frames, interval=40, blit=False)
-
 # 🌟 1. Initialize the progress bar on terminal
 pbar = tqdm(total=total_frames, desc="Rendering Video")
-
-
 # 🌟 2. Define the callback function that executes every frame
 def progress_callback(current_frame, total):
     pbar.update(1)
 
-
 print("Exporting animation to GIF...")
-# 🌟 3. Pass the callback function to ani.save()
 ani.save('ffw2d_evolution.gif', writer='pillow', fps=25, dpi=100, progress_callback=progress_callback)
-
-# 🌟 4. Close the progress bar when finished
 pbar.close()
-f.close()
-print("Animation saved successfully as ffw2d_evolution.gif")
 
+#print("Animation saved successfully as ffw2d_evolution.gif")
 plt.show()
-
 plt.close(fig)
+f.close()
