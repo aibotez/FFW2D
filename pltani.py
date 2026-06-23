@@ -83,7 +83,7 @@ fig.colorbar(im_E1, ax=ax1, label="Field Intensity")
 
 #cmap='bwr','jet'
 # --- Right Plot: Relative Density Perturbation (dne) ---
-imdne = ax2.imshow(dne_0, extent=extent, origin='lower', aspect='auto', vmin=np.min(dne_0), vmax=np.max(dne_0))
+imdne = ax2.imshow(dne_0, extent=extent, origin='lower', aspect='auto', vmin=np.min(dne_0)/2, vmax=np.max(dne_0)/2)
 im_E2 = ax2.imshow(E_intensity_0, extent=extent, origin='lower', aspect='auto', cmap=custom_ramp, vmax=3)
 
 ax2.contour(Metal_T, extent=extent, origin='lower', colors='green', linewidths=0.6, zorder=10)
