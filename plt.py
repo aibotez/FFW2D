@@ -56,6 +56,8 @@ IQ_I_raw = np.loadtxt('IQ_Isig.dat')
 IQ_Q_raw = np.loadtxt('IQ_Qsig.dat')
 Metal = np.loadtxt('antenna_geo.dat')
 
+
+
 # Handle dimensions if IQ data is loaded as a 1D array
 if IQ_I_raw.ndim == 1:
     IQ_I_raw = IQ_I_raw.reshape(1, -1)
@@ -66,8 +68,10 @@ nant, timel = IQ_I_raw.shape
 # Filter data to include only time > 0
 idx = np.where(time  > 0)[0]
 
+
+
 if (nant<2 and nant>0):
-    Ey_rece0 = np.zeros((nant,len(time)))
+    Ey_rece0 = np.zeros((nant,len(Ey_rece)))
     Ey_rece0[0,:] = Ey_rece
     Ey_rece = Ey_rece0
 time = time[idx]
@@ -179,11 +183,13 @@ env = np.abs(hilbert(Edis[:, mid]))
 
 plt.figure(figsize=(8, 6))
 plt.subplot(2, 1, 1)
-plt.plot(rho2d[:, mid], ne_base_2d[:, mid], 'b-', label='ne')
+plt.plot(R, ne_base_2d[:, mid], 'b-', label='ne')
 plt.ylabel('ne (m^-3)')
 plt.grid(True)
 plt.title('Midplane Radial Profiles')
 plt.legend()
+
+#np.savetxt('ne_R.txt',ne_base_2d[:, mid])
 
 plt.subplot(2, 1, 2)
 plt.plot(rho2d[:, mid], env, 'r-', label='E-field Envelope')

@@ -5,6 +5,8 @@
 ## 🚀 Features 
 - Supports both O-mode and X-mode propagation. 
 - Supports both CPU and GPU acceleration.
+- Supports sweep
+- Supports slice
 - Supports adding density fluctuations.
 - Supports custom antenna configurations.
 
@@ -63,9 +65,14 @@ You can copy the `plt.py` or `pltani.py` script into your simulation results dir
 ```
 python plt.py
 
-python pltani.py
+python pltsweep.py
+# Show sweep result
 
-Show time evolution of Edis and ne_2d which are controlled by the 'output_interval' parameter in the input file.
+python pltslice.py
+# Show slice result
+
+python pltani.py
+#Show time evolution of Edis and ne_2d which are controlled by the 'output_interval' parameter in the input file.
 ```
 ##### 7.Output Files Description
 
